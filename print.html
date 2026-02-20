@@ -116,24 +116,30 @@
         .list-people.people-9-or-less .people:nth-child(4n+1) {
             clear: both;
         }
+
         /* Khi in: danh sách người giảm left 10px (sang trái thêm) */
         .list-people {
             margin-left: -20px;
             padding-left: 0;
         }
+
         /* Khi in: chùa 50px, địa chỉ 30px */
         .chua {
             margin-left: 50px;
         }
+
         .address {
             margin-left: 30px;
         }
+
         /* Khi in: chùa + địa chỉ font cố định 12px */
-        .chua p, .address p {
+        .chua p,
+        .address p {
             font-size: 12px !important;
             line-height: 1.4;
             margin-bottom: 1px;
         }
+
         /* ≤9 người khi in: bỏ top */
         body.people-9-or-less .list-people {
             margin-top: 0;
@@ -153,6 +159,30 @@
     }
 </style>
 <script type="text/javascript">
+
+    function loadAddressFromDiaChi(callback) {
+        var container = document.getElementById('address-container');
+        if (!container) {
+            if (callback) callback();
+            return;
+        }
+        fetch('DiaChi.html')
+            .then(function (res) { return res.text(); })
+            .then(function (html) {
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                var addressDiv = tempDiv.querySelector('.address');
+                if (addressDiv) {
+                    container.innerHTML = addressDiv.innerHTML;
+                } else {
+                    container.innerHTML = html;
+                }
+                if (callback) callback();
+            })
+            .catch(function () {
+                if (callback) callback();
+            });
+    }
 
     function loadListPeopleFromData(callback) {
         var container = document.getElementById('list-people-container');
@@ -181,23 +211,25 @@
     }
 
     function printDiv(divName) {
-        loadListPeopleFromData(function () {
-            var printEl = document.getElementById(divName);
-            var printContents = printEl.innerHTML;
-            var originalContents = document.body.innerHTML;
+        loadAddressFromDiaChi(function () {
+            loadListPeopleFromData(function () {
+                var printEl = document.getElementById(divName);
+                var printContents = printEl.innerHTML;
+                var originalContents = document.body.innerHTML;
 
-            /* Gắn inline style vào nội dung in để chắc chắn áp dụng (CSS trong head có thể không ăn khi thay body) */
-            var stylePrint = '<style type="text/css">.chua p,.address p{font-size:12px !important;line-height:1.4;}</style>';
-            printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*address[^"]*"\s*>/i, '<div class="pull-right address" style="margin-left:30px">');
-            printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*chua[^"]*"\s*>/i, '<div class="pull-right chua" style="margin-left:50px">');
-            printContents = printContents.replace(/id="list-people-container"/i, 'id="list-people-container" style="margin-left:-20px;padding-left:0;margin-top:0"');
+                /* Gắn inline style vào nội dung in để chắc chắn áp dụng (CSS trong head có thể không ăn khi thay body) */
+                var stylePrint = '<style type="text/css">.chua p,.address p{font-size:12px !important;line-height:1.4;}</style>';
+                printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*address[^"]*"\s*>/i, '<div class="pull-right address" style="margin-left:30px">');
+                printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*chua[^"]*"\s*>/i, '<div class="pull-right chua" style="margin-left:50px">');
+                printContents = printContents.replace(/id="list-people-container"/i, 'id="list-people-container" style="margin-left:-20px;padding-left:0;margin-top:0"');
 
-            document.body.innerHTML = stylePrint + printContents;
-            if (printEl.classList.contains('people-9-or-less')) document.body.classList.add('people-9-or-less');
+                document.body.innerHTML = stylePrint + printContents;
+                if (printEl.classList.contains('people-9-or-less')) document.body.classList.add('people-9-or-less');
 
-            window.print();
+                window.print();
 
-            document.body.innerHTML = originalContents;
+                document.body.innerHTML = originalContents;
+            });
         });
     }
 </script>
@@ -240,20 +272,68 @@
     <!-- Style in: luôn nằm trong head để khi thay body.innerHTML vẫn áp dụng -->
     <style type="text/css" id="print-only-styles">
         @media print {
-            body { margin: 10mm 55mm 10mm 10mm; }
-            .list-people { margin-left: -20px !important; padding-left: 0 !important; margin-top: 0 !important; }
-            body.people-9-or-less .list-people { margin-top: 0 !important; }
-            .chua { margin-left: 50px !important; }
-            .address { margin-left: 30px !important; }
-            .chua p, .address p { font-size: 12px !important; line-height: 1.4; margin-bottom: 1px; }
+            body {
+                margin: 10mm 55mm 10mm 10mm;
+            }
+
+            .list-people {
+                margin-left: -20px !important;
+                padding-left: 0 !important;
+                margin-top: 0 !important;
+            }
+
+            body.people-9-or-less .list-people {
+                margin-top: 0 !important;
+            }
+
+            .chua {
+                margin-left: 50px !important;
+            }
+
+            .address {
+                margin-left: 30px !important;
+            }
+
+            .chua p,
+            .address p {
+                font-size: 12px !important;
+                line-height: 1.4;
+                margin-bottom: 1px;
+            }
+
             body.people-9-or-less .chua p,
-            body.people-9-or-less .address p { font-size: 12px !important; line-height: 1.4; }
-            body.people-9-or-less .chua { margin: 50px 5px 0px 20px !important; }
-            .people p { font-size: 9px; line-height: 1.4; margin-bottom: 1px; }
-            .list-people.people-9-or-less .people p { font-size: 12px !important; }
-            .people, .chua { width: 50px; margin-bottom: 5px; }
-            .list-people.people-9-or-less .people:nth-child(3n+1) { clear: none; }
-            .list-people.people-9-or-less .people:nth-child(4n+1) { clear: both; }
+            body.people-9-or-less .address p {
+                font-size: 12px !important;
+                line-height: 1.4;
+            }
+
+            body.people-9-or-less .chua {
+                margin: 50px 5px 0px 20px !important;
+            }
+
+            .people p {
+                font-size: 9px;
+                line-height: 1.4;
+                margin-bottom: 1px;
+            }
+
+            .list-people.people-9-or-less .people p {
+                font-size: 12px !important;
+            }
+
+            .people,
+            .chua {
+                width: 50px;
+                margin-bottom: 5px;
+            }
+
+            .list-people.people-9-or-less .people:nth-child(3n+1) {
+                clear: none;
+            }
+
+            .list-people.people-9-or-less .people:nth-child(4n+1) {
+                clear: both;
+            }
         }
     </style>
 </head>
@@ -415,26 +495,8 @@
                     <button onclick="printDiv('print')" class="btn btn-primary printso">In Sớ</button>
 
                     <div class="" id="print">
-                       <div class="pull-right address">
-                    <p>Việt</p>
-                    <p>Nam</p>
-                    <p>Quốc</p>
-                    <p>Phú</p>
-                    <p>Thọ</p>
-                    <p>Tỉnh</p>
-                    <p>Tam</p>
-                    <p>Đảo</p>
-                    <p>Xã</p>
-                    <p>Số</p>
-                    <p>Nhà</p>
-                    <p>6</p>
-                    <p>Tân</p>
-                    <p>Long</p>
-                    <p>Hợp</p>
-                    <p>Châu</p>
-                    <p>Nghệ</p>
-                    <p>Vu</p>
-            </div>
+                        <!-- thêm dữ liệu địa chỉ ở đây -->
+                        <div class="pull-right address" id="address-container"></div>
 
 
                         <div class="pull-right chua">
@@ -484,6 +546,7 @@
     <script type="text/javascript">
         window.url = "https://chuadongcac.site";
         document.addEventListener('DOMContentLoaded', function () {
+            loadAddressFromDiaChi();
             loadListPeopleFromData();
         });
     </script>
