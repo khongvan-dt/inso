@@ -1,0 +1,493 @@
+<style type="text/css">
+    .printso {
+        margin: 20px 0px 20px 0px;
+    }
+
+    .btn {
+        padding: 9px 12px !important;
+    }
+
+    #print {
+        height: 297mm;
+        width: 210mm;
+        border: 1px solid #f5f5f5;
+        clear: both;
+        margin-top: 20px;
+        padding: 40px;
+    }
+
+    .people,
+    .chua {
+        width: 60px;
+        margin-bottom: 6px;
+    }
+
+    .chua {
+        margin: 50px 5px 0px 60px;
+    }
+
+    .people p,
+    .chua p {
+        margin: 0px 0px 1px 0px;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    h1.page-header {
+        display: none;
+    }
+
+    .address {
+        margin: 150px 70px 0px 15px;
+    }
+
+    .address p {
+        margin: 0px 0px 1px 0px;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .list-people .people:nth-child(3n+1) {
+        clear: both;
+    }
+
+    /* ≤9 người: 4 item 1 dòng */
+    .list-people.people-9-or-less .people:nth-child(3n+1) {
+        clear: none;
+    }
+
+    .list-people.people-9-or-less .people:nth-child(4n+1) {
+        clear: both;
+    }
+
+    /* ≤9 người: font to hơn (nhỏ hơn 1 chút), chùa + địa chỉ chỉnh theo */
+    .list-people.people-9-or-less .people p {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    #print.people-9-or-less .chua p,
+    #print.people-9-or-less .address p {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* ≤9 người: margin chùa 20px */
+    #print.people-9-or-less .chua {
+        margin: 50px 5px 0px 20px;
+    }
+
+    @page {
+        margin: 30mm 55mm 10mm 10mm;
+    }
+
+    @media print {
+        body {
+            margin: 30mm 55mm 10mm 10mm;
+        }
+
+        #print {
+            padding: 20px;
+            height: auto;
+            max-height: 297mm;
+        }
+
+        .people p {
+            font-size: 9px;
+            line-height: 1.4;
+            margin-bottom: 1px;
+        }
+
+        .people,
+        .chua {
+            width: 50px;
+            margin-bottom: 5px;
+        }
+
+        .list-people.people-9-or-less .people p {
+            font-size: 12px;
+        }
+
+        /* ≤9 người khi in: 4 item 1 dòng */
+        .list-people.people-9-or-less .people:nth-child(3n+1) {
+            clear: none;
+        }
+
+        .list-people.people-9-or-less .people:nth-child(4n+1) {
+            clear: both;
+        }
+        /* Khi in: danh sách người giảm left 10px (sang trái thêm) */
+        .list-people {
+            margin-left: -20px;
+            padding-left: 0;
+        }
+        /* Khi in: chùa 50px, địa chỉ 30px */
+        .chua {
+            margin-left: 50px;
+        }
+        .address {
+            margin-left: 30px;
+        }
+        /* Khi in: chùa + địa chỉ font cố định 12px */
+        .chua p, .address p {
+            font-size: 12px !important;
+            line-height: 1.4;
+            margin-bottom: 1px;
+        }
+        /* ≤9 người khi in: bỏ top */
+        body.people-9-or-less .list-people {
+            margin-top: 0;
+        }
+
+        /* Khi in, body có class people-9-or-less → chùa + địa chỉ ăn theo cỡ người */
+        body.people-9-or-less .chua p,
+        body.people-9-or-less .address p {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        /* ≤9 người khi in: margin chùa 20px */
+        body.people-9-or-less .chua {
+            margin: 50px 5px 0px 20px;
+        }
+    }
+</style>
+<script type="text/javascript">
+
+    function loadListPeopleFromData(callback) {
+        var container = document.getElementById('list-people-container');
+        if (!container) {
+            if (callback) callback();
+            return;
+        }
+        fetch('data.html')
+            .then(function (res) { return res.text(); })
+            .then(function (html) {
+                container.innerHTML = html;
+                var count = container.querySelectorAll('.people').length;
+                var printEl = document.getElementById('print');
+                if (count <= 9) {
+                    container.classList.add('people-9-or-less');
+                    if (printEl) printEl.classList.add('people-9-or-less');
+                } else {
+                    container.classList.remove('people-9-or-less');
+                    if (printEl) printEl.classList.remove('people-9-or-less');
+                }
+                if (callback) callback();
+            })
+            .catch(function () {
+                if (callback) callback();
+            });
+    }
+
+    function printDiv(divName) {
+        loadListPeopleFromData(function () {
+            var printEl = document.getElementById(divName);
+            var printContents = printEl.innerHTML;
+            var originalContents = document.body.innerHTML;
+
+            /* Gắn inline style vào nội dung in để chắc chắn áp dụng (CSS trong head có thể không ăn khi thay body) */
+            var stylePrint = '<style type="text/css">.chua p,.address p{font-size:12px !important;line-height:1.4;}</style>';
+            printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*address[^"]*"\s*>/i, '<div class="pull-right address" style="margin-left:30px">');
+            printContents = printContents.replace(/<div\s+class="[^"]*pull-right[^"]*chua[^"]*"\s*>/i, '<div class="pull-right chua" style="margin-left:50px">');
+            printContents = printContents.replace(/id="list-people-container"/i, 'id="list-people-container" style="margin-left:-20px;padding-left:0;margin-top:0"');
+
+            document.body.innerHTML = stylePrint + printContents;
+            if (printEl.classList.contains('people-9-or-less')) document.body.classList.add('people-9-or-less');
+
+            window.print();
+
+            document.body.innerHTML = originalContents;
+        });
+    }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Admin Quản Trị">
+    <meta name="author" content="Admin Quản Trị">
+    <title>Admin Quản Trị</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="https://chuadongcac.site/admin/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://chuadongcac.site/admin/css/bootstrap-select.min.css" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="https://chuadongcac.site/admin/bower_components/metisMenu/dist/metisMenu.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="https://chuadongcac.site/admin/dist/css/sb-admin-2.css" rel="stylesheet">
+    <link href="https://chuadongcac.site/admin/css/custom.css" rel="stylesheet">
+    <link href="https://chuadongcac.site/admin/css/magnific-popup.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="https://chuadongcac.site/admin/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet"
+        type="text/css">
+
+    <!-- DataTables CSS -->
+    <link
+        href="https://chuadongcac.site/admin/bower_components/datatables-plugins/integration/bootstrap/3/dataTables.bootstrap.css"
+        rel="stylesheet">
+
+    <!-- DataTables Responsive CSS -->
+    <link href="https://chuadongcac.site/admin/bower_components/datatables-responsive/css/dataTables.responsive.css"
+        rel="stylesheet">
+
+    <!-- Style in: luôn nằm trong head để khi thay body.innerHTML vẫn áp dụng -->
+    <style type="text/css" id="print-only-styles">
+        @media print {
+            body { margin: 10mm 55mm 10mm 10mm; }
+            .list-people { margin-left: -20px !important; padding-left: 0 !important; margin-top: 0 !important; }
+            body.people-9-or-less .list-people { margin-top: 0 !important; }
+            .chua { margin-left: 50px !important; }
+            .address { margin-left: 30px !important; }
+            .chua p, .address p { font-size: 12px !important; line-height: 1.4; margin-bottom: 1px; }
+            body.people-9-or-less .chua p,
+            body.people-9-or-less .address p { font-size: 12px !important; line-height: 1.4; }
+            body.people-9-or-less .chua { margin: 50px 5px 0px 20px !important; }
+            .people p { font-size: 9px; line-height: 1.4; margin-bottom: 1px; }
+            .list-people.people-9-or-less .people p { font-size: 12px !important; }
+            .people, .chua { width: 50px; margin-bottom: 5px; }
+            .list-people.people-9-or-less .people:nth-child(3n+1) { clear: none; }
+            .list-people.people-9-or-less .people:nth-child(4n+1) { clear: both; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://chuadongcac.site/admin/dashboard/index">Admin Quản Trị</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                <!-- /.dropdown -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="#"><i class="fa fa-user fa-fw"></i> dongcac</a>
+                        </li>
+                        <li><a href="https://chuadongcac.site/admin/setting/list"><i class="fa fa-gear fa-fw"></i> Cài
+                                Đặt</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li><a href="https://chuadongcac.site/admin/auth/logout"><i class="fa fa-sign-out fa-fw"></i>
+                                Thoát</a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+                        <li class="sidebar-search">
+                            <div class="input-group custom-search-form">
+                                <input type="text" class="form-control" placeholder="Search...">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!-- /input-group -->
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/dashboard/index"><i
+                                    class="fa fa-dashboard fa-fw"></i> Bản Tin</a>
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/people/list"><i class="fa fa-home fa-fw"></i> Hộ Gia
+                                Đình<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/people/add">Thêm Hộ Gia Đình</a>
+                                </li>
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/people/list">Danh Sách Hộ Gia Đình</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/year/list"><i class="fa fa-star fa-fw"></i> Sao<span
+                                    class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/year/add">Chỉnh Sửa Sao Theo Năm</a>
+                                </li>
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/year/list">Danh Sách Sao Theo Năm</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/day/list"><i class="fa fa-calendar fa-fw"></i> Ngày
+                                Làm Lễ<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/day/add">Cập Nhật Ngày Làm Lễ</a>
+                                </li>
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/day/list">Danh Sách Ngày Làm Lễ</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/user/add"><i class="fa fa-users fa-fw"></i> Tài
+                                Khoản<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/user/add">Thêm Tài Khoản</a>
+                                </li>
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/user/list">Danh Sách Tài Khoản</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/setting/list"><i class="fa fa-gear fa-fw"></i> Cài
+                                Đặt<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/setting/add">Thêm Cài Đặt</a>
+                                </li>
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/setting/list">Danh Sách Cài Đặt</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="https://chuadongcac.site/admin/help/list"><i class="fa fa-info fa-fw"></i> Trợ
+                                Giúp<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="https://chuadongcac.site/admin/help/list">Hướng Dẫn</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header"> <small></small>
+                        </h1>
+                    </div>
+
+                    <div class="col-lg-12">
+                    </div>
+
+                    <!-- Noi dung -->
+
+                    <a href="https://chuadongcac.site/admin/people/listFamily/1" class="btn btn-info printso">Danh Sách
+                        Hộ Gia Đình</a>
+                    <button onclick="printDiv('print')" class="btn btn-primary printso">In Sớ</button>
+
+                    <div class="" id="print">
+                       <div class="pull-right address">
+                    <p>Việt</p>
+                    <p>Nam</p>
+                    <p>Quốc</p>
+                    <p>Phú</p>
+                    <p>Thọ</p>
+                    <p>Tỉnh</p>
+                    <p>Tam</p>
+                    <p>Đảo</p>
+                    <p>Xã</p>
+                    <p>Số</p>
+                    <p>Nhà</p>
+                    <p>6</p>
+                    <p>Tân</p>
+                    <p>Long</p>
+                    <p>Hợp</p>
+                    <p>Châu</p>
+                    <p>Nghệ</p>
+                    <p>Vu</p>
+            </div>
+
+
+                        <div class="pull-right chua">
+                            <p>Đông</p>
+                            <p>Các</p>
+                            <p>Tự</p>
+                        </div>
+
+
+                        <!-- đây là nơi truyền dữ liệu ở file data.html -->
+                        <div class="pull-right list-people" id="list-people-container"></div>
+                    </div>
+                    <!-- End noi dung -->
+
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="https://chuadongcac.site/admin/bower_components/jquery/dist/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="https://chuadongcac.site/admin/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="https://chuadongcac.site/admin/bower_components/metisMenu/dist/metisMenu.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="https://chuadongcac.site/admin/dist/js/sb-admin-2.js"></script>
+
+    <!-- DataTables JavaScript -->
+    <script src="https://chuadongcac.site/admin/bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
+    <script
+        src="https://chuadongcac.site/admin/bower_components/datatables-plugins/integration/bootstrap/3/dataTables.bootstrap.min.js"></script>
+
+    <script src="https://chuadongcac.site/admin/js/jquery.sortable.min.js"></script>
+    <script src="https://chuadongcac.site/admin/js/bootstrap-select.min.js"></script>
+    <script src="https://chuadongcac.site/admin/js/jquery.magnific-popup.js"></script>
+    <script src="https://chuadongcac.site/admin/js/myscript.js"></script>
+
+    <script type="text/javascript">
+        window.url = "https://chuadongcac.site";
+        document.addEventListener('DOMContentLoaded', function () {
+            loadListPeopleFromData();
+        });
+    </script>
+
+</body>
+
+</html>
